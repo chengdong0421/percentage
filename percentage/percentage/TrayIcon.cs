@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
@@ -10,8 +10,13 @@ namespace percentage
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         static extern bool DestroyIcon(IntPtr handle);
 
-        private const string iconFont = "Segoe UI";
-        private const int iconFontSize = 14;
+        private string iconFont = "Arial Bold";
+        private const int iconFontSize = 12;
+
+        private int alpha = 0;
+        private int r = 0;
+        private int g = 0;
+        private int b = 0;
 
         private string batteryPercentage;
         private NotifyIcon notifyIcon;
@@ -32,7 +37,7 @@ namespace percentage
             menuItem.Click += new System.EventHandler(menuItem_Click);
 
             notifyIcon.ContextMenu = contextMenu;
-
+            
             batteryPercentage = "?";
 
             notifyIcon.Visible = true;
@@ -43,12 +48,24 @@ namespace percentage
             timer.Start();
         }
 
+
+        public void setFont(string font){
+            this.iconFont = font;
+        }
+
+        public void setColor(int alpha, int r, int g, int b){
+            this.alpha = alpha;
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        }
+
         private void timer_Tick(object sender, EventArgs e)
         {
             PowerStatus powerStatus = SystemInformation.PowerStatus;
             batteryPercentage = (powerStatus.BatteryLifePercent * 100).ToString();
 
-            using (Bitmap bitmap = new Bitmap(DrawText(batteryPercentage, new Font(iconFont, iconFontSize), Color.White, Color.Black)))
+            using (Bitmap bitmap = new Bitmap(DrawText(batteryPercentage, new Font(iconFont, iconFontSize), Color.White, Color.FromArgb(alpha, r, g, b))))
             {
                 System.IntPtr intPtr = bitmap.GetHicon();
                 try
@@ -75,7 +92,7 @@ namespace percentage
 
         private Image DrawText(String text, Font font, Color textColor, Color backColor)
         {
-            var textSize = GetImageSize(text, font);
+            SizeF textSize = GetImageSize(text, font);
             Image image = new Bitmap((int) textSize.Width, (int) textSize.Height);
             using (Graphics graphics = Graphics.FromImage(image))
             {
@@ -85,7 +102,7 @@ namespace percentage
                 // create a brush for the text
                 using (Brush textBrush = new SolidBrush(textColor))
                 {
-                    graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                    graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
                     graphics.DrawString(text, font, textBrush, 0, 0);
                     graphics.Save();
                 }
@@ -96,7 +113,7 @@ namespace percentage
 
         private static SizeF GetImageSize(string text, Font font)
         {
-            using (Image image = new Bitmap(1, 1))
+            using (Image image = new Bitmap(20, 20))
             using (Graphics graphics = Graphics.FromImage(image))
                 return graphics.MeasureString(text, font);
         }
